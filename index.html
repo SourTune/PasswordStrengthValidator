@@ -324,6 +324,8 @@
     <div class="chk" id="c-lower"><div class="dot"></div>Lowercase letter</div>
     <div class="chk" id="c-num"><div class="dot"></div>Number</div>
     <div class="chk" id="c-sym"><div class="dot"></div>Symbol (!@#…)</div>
+    <div class="chk" id="c-norep"><div class="dot"></div>No repeating chars</div>
+    <div class="chk" id="c-noseq"><div class="dot"></div>No sequences (abc…)</div>
   </div>
 
   <div class="tip" id="tip" style="display:none"></div>
@@ -530,7 +532,7 @@ document.getElementById('pw').addEventListener('input', function() {
     crackSub.textContent = 'Enter a password above';
     tip.textContent = '';
     tip.style.display = 'none';
-    ['c-len8','c-len12','c-upper','c-lower','c-num','c-sym'].forEach(id => setCheck(id, false));
+    ['c-len8','c-len12','c-upper','c-lower','c-num','c-sym','c-norep','c-noseq'].forEach(id => setCheck(id, false));
     return;
   }
 
@@ -540,6 +542,8 @@ document.getElementById('pw').addEventListener('input', function() {
   const hasSym   = /[^a-zA-Z0-9]/.test(val);
   const len8     = val.length >= 8;
   const len12    = val.length >= 12;
+  const noRep    = !hasRepeatedChars(val);
+  const noSeq    = !hasKeyboardWalk(val);
 
   setCheck('c-len8', len8);
   setCheck('c-len12', len12);
@@ -547,6 +551,8 @@ document.getElementById('pw').addEventListener('input', function() {
   setCheck('c-lower', hasLower);
   setCheck('c-num', hasNum);
   setCheck('c-sym', hasSym);
+  setCheck('c-norep', noRep);
+  setCheck('c-noseq', noSeq);
 
   // ── Estimate guesses ──
   const { guesses, reasons } = estimateGuesses(val);
@@ -597,3 +603,4 @@ document.getElementById('pw').addEventListener('input', function() {
 </script>
 </body>
 </html>
+
