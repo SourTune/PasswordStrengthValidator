@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Password Strength Validator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0c0f;
+    --surface: #13151a;
+    --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0f0f0;
+    --muted: #6b7280;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1.25rem;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .page-header h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #f0f0f0;
+    margin-bottom: 0.4rem;
+  }
+
+  .page-header p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+
+  /* Input */
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .pw-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+  }
+
+  #pw {
+    width: 100%;
+    padding: 0.75rem 2.8rem 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  #pw::placeholder { color: #3a3f4d; }
+  #pw:focus { border-color: rgba(255,255,255,0.25); }
+
+  .toggle-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1rem;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .toggle-btn:hover { color: var(--text); }
+
+  /* Strength bar */
+  .bar-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0.75rem;
+  }
+
+  .bar-seg {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--surface2);
+    transition: background 0.4s ease;
+  }
+
+  /* Score row */
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .score-badge {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .entropy-txt {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* Crack time — hero display */
+  .crack-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: border-color 0.3s;
+  }
+
+  .crack-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .crack-value {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f0f0f0;
+    transition: color 0.3s;
+    line-height: 1.2;
+  }
+
+  .crack-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Checks grid */
+  .checks-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+
+  .checks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    margin-bottom: 1.25rem;
+  }
+
+  .chk {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #4a5060;
+    transition: color 0.25s;
+  }
+
+  .chk .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #2e3240;
+    flex-shrink: 0;
+    transition: background 0.25s, border-color 0.25s;
+  }
+
+  .chk.pass { color: #a3b899; }
+  .chk.pass .dot { background: #5a9e6a; border-color: #5a9e6a; }
+
+  /* Suggestion */
+  .tip {
+    font-size: 0.8rem;
+    color: var(--muted);
+    min-height: 1.1rem;
+    line-height: 1.5;
+    border-left: 2px solid var(--border2);
+    padding-left: 0.75rem;
+  }
+
+  .tip.visible { border-color: rgba(255,255,255,0.2); }
+
+  /* Colors per level */
+  .lvl-0 .bar-seg.active { background: #c0392b; }
+  .lvl-1 .bar-seg.active { background: #e67e22; }
+  .lvl-2 .bar-seg.active { background: #d4ac0d; }
+  .lvl-3 .bar-seg.active { background: #27ae60; }
+  .lvl-4 .bar-seg.active { background: #1abc9c; }
+
+  .lvl-0 .score-badge { background: rgba(192,57,43,0.15); color: #e06c64; }
+  .lvl-1 .score-badge { background: rgba(230,126,34,0.15); color: #e89e5a; }
+  .lvl-2 .score-badge { background: rgba(212,172,13,0.15); color: #d4b94a; }
+  .lvl-3 .score-badge { background: rgba(39,174,96,0.15); color: #65c98a; }
+  .lvl-4 .score-badge { background: rgba(26,188,156,0.12); color: #4ecdc4; }
+
+  .lvl-0 .crack-block { border-color: rgba(192,57,43,0.3); }
+  .lvl-1 .crack-block { border-color: rgba(230,126,34,0.3); }
+  .lvl-2 .crack-block { border-color: rgba(212,172,13,0.3); }
+  .lvl-3 .crack-block { border-color: rgba(39,174,96,0.25); }
+  .lvl-4 .crack-block { border-color: rgba(26,188,156,0.25); }
+
+  .lvl-0 .crack-value { color: #e06c64; }
+  .lvl-1 .crack-value { color: #e89e5a; }
+  .lvl-2 .crack-value { color: #d4b94a; }
+  .lvl-3 .crack-value { color: #65c98a; }
+  .lvl-4 .crack-value { color: #4ecdc4; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 1.75rem;
+    font-size: 0.7rem;
+    color: #2e3240;
+    text-align: center;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>🔐 Password Strength</h1>
+  <p>See how long it would take to crack your password</p>
+</header>
+
+<div class="card" id="card">
+  <div class="field-label">Your password</div>
+  <div class="pw-wrap">
+    <input type="password" id="pw" placeholder="Start typing…" autocomplete="off" spellcheck="false" />
+    <button class="toggle-btn" id="toggle" title="Show/hide">👁</button>
+  </div>
+
+  <div class="bar-row" id="bar-row">
+    <div class="bar-seg" id="s0"></div>
+    <div class="bar-seg" id="s1"></div>
+    <div class="bar-seg" id="s2"></div>
+    <div class="bar-seg" id="s3"></div>
+    <div class="bar-seg" id="s4"></div>
+  </div>
+
+  <div class="score-row">
+    <span class="score-badge" id="badge">—</span>
+    <span class="entropy-txt" id="entropy"></span>
+  </div>
+
+  <div class="crack-block" id="crack-block">
+    <div class="crack-label">Estimated crack time</div>
+    <div class="crack-value" id="crack-val">—</div>
+    <div class="crack-sub" id="crack-sub">Enter a password above</div>
+  </div>
+
+  <div class="checks-title">Requirements</div>
+  <div class="checks">
+    <div class="chk" id="c-len8"><div class="dot"></div>8+ characters</div>
+    <div class="chk" id="c-len12"><div class="dot"></div>12+ characters</div>
+    <div class="chk" id="c-upper"><div class="dot"></div>Uppercase letter</div>
+    <div class="chk" id="c-lower"><div class="dot"></div>Lowercase letter</div>
+    <div class="chk" id="c-num"><div class="dot"></div>Number</div>
+    <div class="chk" id="c-sym"><div class="dot"></div>Symbol (!@#…)</div>
+  </div>
+
+  <div class="tip" id="tip" style="display:none"></div>
+</div>
+
+
+
+<script>
+// ─── Dictionaries & patterns ───────────────────────────────────────────────
+const COMMON_WORDS = new Set([
+  'password','passw0rd','p@ssword','p@ssw0rd','pa$$word',
+  '123456','12345678','123456789','1234567890','111111','000000',
+  'qwerty','qwertyuiop','qwerty123','abc123','abcdef',
+  'letmein','welcome','monkey','dragon','master','sunshine',
+  'princess','iloveyou','football','baseball','superman','batman',
+  'trustno1','pass','admin','login','test','guest','user',
+  'shadow','michael','jessica','ashley','bailey','charlie',
+  'donald','harley','ranger','thomas','tigger','robert',
+  'soccer','hockey','killer','george','andrew','thomas',
+  'summer','winter','spring','autumn','january','february',
+  'march','april','june','july','august','september',
+  'october','november','december'
+]);
+
+const KEYBOARD_WALKS = [
+  'qwertyuiop','asdfghjkl','zxcvbnm',
+  'qazwsxedc','1qaz2wsx','!qaz@wsx',
+  '1234567890','0987654321','123qwe','qwe123'
+];
+
+const LEET = {'@':'a','3':'e','1':'i','0':'o','$':'s','5':'s','7':'t','!':'i','4':'a'};
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function deleet(s) {
+  return s.toLowerCase().split('').map(c => LEET[c] || c).join('');
+}
+
+function isCommon(s) {
+  const l = s.toLowerCase();
+  const dl = deleet(s);
+  if (COMMON_WORDS.has(l) || COMMON_WORDS.has(dl)) return true;
+  // strip trailing digits/symbols and check base word
+  const base = l.replace(/[\d!@#$%^&*]+$/, '').replace(/^[\d!@#$%^&*]+/, '');
+  if (base.length >= 4 && COMMON_WORDS.has(base)) return true;
+  return false;
+}
+
+function hasKeyboardWalk(s) {
+  const l = s.toLowerCase();
+  for (const walk of KEYBOARD_WALKS) {
+    for (let i = 0; i <= walk.length - 4; i++) {
+      if (l.includes(walk.slice(i, i+4))) return true;
+      const rev = walk.slice(i, i+4).split('').reverse().join('');
+      if (l.includes(rev)) return true;
+    }
+  }
+  return false;
+}
+
+function hasDatePattern(s) {
+  return /\b(19|20)\d{2}\b/.test(s) ||
+         /\b\d{1,2}[\/\-\.]\d{1,2}([\/\-\.]\d{2,4})?\b/.test(s) ||
+         /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(s);
+}
+
+function hasRepeatedChars(s) {
+  return /(.)\1{2,}/.test(s);
+}
+
+function charsetSize(s) {
+  let n = 0;
+  if (/[a-z]/.test(s)) n += 26;
+  if (/[A-Z]/.test(s)) n += 26;
+  if (/[0-9]/.test(s)) n += 10;
+  if (/[^a-zA-Z0-9]/.test(s)) n += 32;
+  return n;
+}
+
+// ─── Core: estimate effective guesses needed ────────────────────────────────
+// Returns an object with guesses (BigInt-safe float) and penalty reasons
+function estimateGuesses(s) {
+  const len = s.length;
+  if (len === 0) return { guesses: 0, reasons: [] };
+
+  const reasons = [];
+  let guesses;
+
+  // 1. Base: brute-force combinations with charset
+  const cs = charsetSize(s);
+  const bruteGuesses = Math.pow(cs, len);
+
+  // 2. Pattern penalties — reduce effective guesses when patterns detected
+  let penalty = 1.0; // multiplier < 1 makes cracking easier (fewer effective guesses)
+
+  if (isCommon(s)) {
+    // Common passwords: attackers try these in first ~10M guesses
+    guesses = Math.min(bruteGuesses, 1e7);
+    reasons.push('common');
+    return { guesses, reasons };
+  }
+
+  if (hasKeyboardWalk(s)) {
+    penalty *= 0.001; // keyboard walks are in every wordlist
+    reasons.push('keyboard');
+  }
+
+  if (hasDatePattern(s)) {
+    penalty *= 0.01;
+    reasons.push('date');
+  }
+
+  if (hasRepeatedChars(s)) {
+    penalty *= 0.1;
+    reasons.push('repeat');
+  }
+
+  // 3. All-lowercase or all-uppercase with only letters → dictionary-like
+  if (/^[a-zA-Z]+$/.test(s)) {
+    // Treat as word-based: ~170k English words, but brute still applies if long
+    const wordGuesses = Math.pow(170000, Math.max(1, Math.round(len / 5)));
+    guesses = Math.min(bruteGuesses, wordGuesses) * (penalty < 1 ? penalty : 1);
+    if (len < 8) reasons.push('short');
+  } else {
+    guesses = bruteGuesses * penalty;
+  }
+
+  // 4. Short password bonus penalty
+  if (len < 8) {
+    guesses = Math.min(guesses, bruteGuesses); // no benefit from patterns, still short
+    reasons.push('short');
+  }
+
+  return { guesses: Math.max(1, guesses), reasons };
+}
+
+// ─── Format seconds into human time ────────────────────────────────────────
+function fmtSecs(secs) {
+  if (secs < 0.001)           return 'less than a millisecond';
+  if (secs < 1)               return Math.round(secs * 1000) + ' milliseconds';
+  if (secs < 60)              return fmtUnit(secs, 'second');
+  if (secs < 3600)            return fmtUnit(secs / 60, 'minute');
+  if (secs < 86400)           return fmtUnit(secs / 3600, 'hour');
+  if (secs < 86400 * 30)      return fmtUnit(secs / 86400, 'day');
+  if (secs < 86400 * 365)     return fmtUnit(secs / (86400 * 30), 'month');
+  if (secs < 86400 * 365 * 1e3)  return fmtUnit(secs / (86400 * 365), 'year');
+  if (secs < 86400 * 365 * 1e6)  return fmtUnit(secs / (86400 * 365 * 1e3), 'thousand years');
+  if (secs < 86400 * 365 * 1e9)  return fmtUnit(secs / (86400 * 365 * 1e6), 'million years');
+  if (secs < 86400 * 365 * 1e12) return fmtUnit(secs / (86400 * 365 * 1e9), 'billion years');
+  return 'longer than the universe has existed';
+}
+
+function fmtUnit(n, unit) {
+  const r = n >= 10 ? Math.round(n) : parseFloat(n.toPrecision(2));
+  return r + ' ' + unit + (r !== 1 ? 's' : '');
+}
+
+// ─── Three attack scenarios ─────────────────────────────────────────────────
+// Rate = guesses/second for each scenario
+// Online throttled: 10/s (login page with rate limiting)
+// Fast hash (MD5/SHA1 leaked DB): 10 billion/s
+// Slow hash (bcrypt cost 10): ~20,000/s
+const SCENARIOS = [
+  { label: 'Online attack',    rate: 10,     note: 'Rate-limited login, 10 guesses/sec' },
+  { label: 'Fast hash (MD5)',  rate: 1e10,   note: 'Leaked DB, weak hashing, 10B/sec' },
+  { label: 'Slow hash (bcrypt)', rate: 2e4,  note: 'Properly stored password, 20K/sec' },
+];
+
+// ─── UI refs ────────────────────────────────────────────────────────────────
+const levels = [
+  { label: 'Very weak',   segs: 1 },
+  { label: 'Weak',        segs: 2 },
+  { label: 'Fair',        segs: 3 },
+  { label: 'Strong',      segs: 4 },
+  { label: 'Very strong', segs: 5 },
+];
+
+const segs = [0,1,2,3,4].map(i => document.getElementById('s'+i));
+const card = document.getElementById('card');
+const badge = document.getElementById('badge');
+const entropy = document.getElementById('entropy');
+const crackVal = document.getElementById('crack-val');
+const crackSub = document.getElementById('crack-sub');
+const tip = document.getElementById('tip');
+
+function setCheck(id, pass) {
+  document.getElementById(id).classList.toggle('pass', pass);
+}
+
+document.getElementById('toggle').addEventListener('click', () => {
+  const pw = document.getElementById('pw');
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('pw').addEventListener('input', function() {
+  const val = this.value;
+
+  segs.forEach(s => s.classList.remove('active'));
+  card.className = 'card';
+
+  if (!val) {
+    badge.textContent = '—';
+    entropy.textContent = '';
+    crackVal.textContent = '—';
+    crackSub.textContent = 'Enter a password above';
+    tip.textContent = '';
+    tip.style.display = 'none';
+    ['c-len8','c-len12','c-upper','c-lower','c-num','c-sym'].forEach(id => setCheck(id, false));
+    return;
+  }
+
+  const hasUpper = /[A-Z]/.test(val);
+  const hasLower = /[a-z]/.test(val);
+  const hasNum   = /[0-9]/.test(val);
+  const hasSym   = /[^a-zA-Z0-9]/.test(val);
+  const len8     = val.length >= 8;
+  const len12    = val.length >= 12;
+
+  setCheck('c-len8', len8);
+  setCheck('c-len12', len12);
+  setCheck('c-upper', hasUpper);
+  setCheck('c-lower', hasLower);
+  setCheck('c-num', hasNum);
+  setCheck('c-sym', hasSym);
+
+  // ── Estimate guesses ──
+  const { guesses, reasons } = estimateGuesses(val);
+
+  // ── Effective entropy (bits) from guesses ──
+  const effectiveBits = guesses > 0 ? Math.log2(guesses) : 0;
+
+  // ── Score from effective bits (not raw charset) ──
+  // <28 bits = very weak, <36 = weak, <50 = fair, <64 = strong, 64+ = very strong
+  let lvlIdx = effectiveBits < 28 ? 0
+             : effectiveBits < 36 ? 1
+             : effectiveBits < 50 ? 2
+             : effectiveBits < 64 ? 3 : 4;
+
+  const lvl = levels[lvlIdx];
+  card.classList.add('lvl-' + lvlIdx);
+  badge.textContent = lvl.label;
+  for (let i = 0; i < lvl.segs; i++) segs[i].classList.add('active');
+  entropy.textContent = Math.round(effectiveBits) + ' effective bits';
+
+  // ── Show worst-case scenario (fast hash) as headline ──
+  const worstRate = SCENARIOS[1].rate; // fast hash
+  const worstSecs = (guesses / 2) / worstRate;
+  crackVal.textContent = fmtSecs(worstSecs);
+
+  // ── Sub-line: show bcrypt time for comparison ──
+  const bcryptRate = SCENARIOS[2].rate;
+  const bcryptSecs = (guesses / 2) / bcryptRate;
+  crackSub.textContent = 'With bcrypt: ' + fmtSecs(bcryptSecs) + ' · Assumes fast offline attack';
+
+  // ── Tips ──
+  const tips = [];
+  if (reasons.includes('common'))   tips.push('This matches a commonly breached password or pattern.');
+  else if (reasons.includes('keyboard')) tips.push('Keyboard patterns like "qwerty" are cracked instantly.');
+  else if (reasons.includes('date'))     tips.push('Dates and years are among the first things crackers try.');
+  else if (!len8)    tips.push('Use at least 8 characters to start.');
+  else if (!len12)   tips.push('Extend to 12+ characters for much better security.');
+  else if (!hasUpper) tips.push('Add an uppercase letter.');
+  else if (!hasLower) tips.push('Add a lowercase letter.');
+  else if (!hasNum)   tips.push('Include a number.');
+  else if (!hasSym)   tips.push('Add a symbol like ! @ # $ % to boost strength.');
+
+  const tipText = tips[0] || (lvlIdx >= 3 ? 'Great password! A long random passphrase is even stronger.' : '');
+  tip.textContent = tipText;
+  tip.style.display = tipText ? 'block' : 'none';
+  tip.classList.toggle('visible', !!tipText);
+});
+</script>
+</body>
+</html>
