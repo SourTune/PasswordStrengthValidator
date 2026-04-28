@@ -6,396 +6,191 @@
 <title>Password Strength Validator</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0b0c0f;
-    --surface: #13151a;
-    --surface2: #1c1f27;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.13);
-    --text: #f0f0f0;
-    --muted: #6b7280;
-    --mono: 'Space Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
-  }
+:root {
+  --bg: #0b0c0f; --surface: #13151a; --s2: #1c1f27;
+  --b1: rgba(255,255,255,0.07); --b2: rgba(255,255,255,0.13);
+  --text: #f0f0f0; --muted: #6b7280;
+  --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+}
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    -webkit-font-smoothing: antialiased;
-  }
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1.25rem; }
 
-  body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem 1.25rem;
-  }
+h1 { font-family: var(--mono); font-size: clamp(1.4rem,4vw,2rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.4rem; }
+.hdr { text-align: center; margin-bottom: 2.5rem; animation: up .5s both; }
+.hdr p { font-size: .875rem; color: var(--muted); font-weight: 300; }
 
-  .page-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-    animation: fadeUp 0.5s ease both;
-  }
+.card, .gen-card { width: 100%; max-width: 520px; background: var(--surface); border: 1px solid var(--b1); border-radius: 16px; padding: 2rem; }
+.card { animation: up .5s .1s both; }
+.gen-card { margin-top: 1.25rem; animation: up .5s .2s both; }
 
-  .page-header h1 {
-    font-family: var(--mono);
-    font-size: clamp(1.4rem, 4vw, 2rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: #f0f0f0;
-    margin-bottom: 0.4rem;
-  }
+.lbl { font-size: .75rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; }
+.rel { position: relative; margin-bottom: 1.25rem; }
 
-  .page-header p {
-    font-size: 0.875rem;
-    color: var(--muted);
-    font-weight: 300;
-  }
+input[type=text], input[type=password] {
+  width: 100%; padding: .75rem 2.8rem .75rem 1rem;
+  font-family: var(--mono); font-size: 1rem;
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 10px; color: var(--text);
+  outline: none; transition: border-color .2s; letter-spacing: .05em;
+}
+input::placeholder { color: #3a3f4d; }
+input:focus { border-color: rgba(255,255,255,.25); }
+#gen-output { cursor: default; user-select: all; word-break: break-all; }
 
-  .card {
-    width: 100%;
-    max-width: 520px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    animation: fadeUp 0.5s 0.1s ease both;
-  }
+.icon-btn { position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; padding: 4px; line-height: 1; transition: color .2s; }
+.icon-btn:hover { color: var(--text); }
 
-  /* Input */
-  .field-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
-  }
+.bars { display: flex; gap: 4px; margin-bottom: .75rem; }
+.seg { flex: 1; height: 5px; border-radius: 3px; background: var(--s2); transition: background .4s; }
 
-  .pw-wrap {
-    position: relative;
-    margin-bottom: 1.25rem;
-  }
+.score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.badge { font-family: var(--mono); font-size: .8rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: var(--s2); color: var(--muted); letter-spacing: .05em; transition: background .3s, color .3s; }
+.ebits { font-size: .75rem; color: var(--muted); font-family: var(--mono); }
 
-  #pw {
-    width: 100%;
-    padding: 0.75rem 2.8rem 0.75rem 1rem;
-    font-family: var(--mono);
-    font-size: 1rem;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
-    letter-spacing: 0.05em;
-  }
+.crack { background: var(--s2); border: 1px solid var(--b1); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 2px; transition: border-color .3s; }
+.crack-lbl { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.crack-val { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; color: var(--text); transition: color .3s; line-height: 1.2; }
+.crack-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; }
 
-  #pw::placeholder { color: #3a3f4d; }
-  #pw:focus { border-color: rgba(255,255,255,0.25); }
+.req-title { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: .75rem; }
+.reqs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-bottom: 1.25rem; }
+.req { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: #4a5060; transition: color .25s; }
+.req .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #2e3240; flex-shrink: 0; transition: background .25s, border-color .25s; }
+.req.pass { color: #a3b899; }
+.req.pass .dot { background: #5a9e6a; border-color: #5a9e6a; }
 
-  .toggle-btn {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 1rem;
-    padding: 4px;
-    line-height: 1;
-    transition: color 0.2s;
-  }
-  .toggle-btn:hover { color: var(--text); }
+.tip { font-size: .8rem; color: var(--muted); line-height: 1.5; border-left: 2px solid transparent; padding-left: .75rem; }
+.tip.show { border-color: rgba(255,255,255,.2); }
 
-  /* Strength bar */
-  .bar-row {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 0.75rem;
-  }
+.lvl-0 .seg.on{background:#c0392b} .lvl-0 .badge{background:rgba(192,57,43,.15);color:#e06c64} .lvl-0 .crack{border-color:rgba(192,57,43,.3)} .lvl-0 .crack-val{color:#e06c64}
+.lvl-1 .seg.on{background:#e67e22} .lvl-1 .badge{background:rgba(230,126,34,.15);color:#e89e5a} .lvl-1 .crack{border-color:rgba(230,126,34,.3)} .lvl-1 .crack-val{color:#e89e5a}
+.lvl-2 .seg.on{background:#d4ac0d} .lvl-2 .badge{background:rgba(212,172,13,.15);color:#d4b94a} .lvl-2 .crack{border-color:rgba(212,172,13,.3)} .lvl-2 .crack-val{color:#d4b94a}
+.lvl-3 .seg.on{background:#27ae60} .lvl-3 .badge{background:rgba(39,174,96,.15);color:#65c98a}  .lvl-3 .crack{border-color:rgba(39,174,96,.25)}  .lvl-3 .crack-val{color:#65c98a}
+.lvl-4 .seg.on{background:#1abc9c} .lvl-4 .badge{background:rgba(26,188,156,.12);color:#4ecdc4} .lvl-4 .crack{border-color:rgba(26,188,156,.25)} .lvl-4 .crack-val{color:#4ecdc4}
 
-  .bar-seg {
-    flex: 1;
-    height: 5px;
-    border-radius: 3px;
-    background: var(--surface2);
-    transition: background 0.4s ease;
-  }
+.len-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; }
+.len-row label { font-size: .75rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+#gen-len { flex: 1; accent-color: #4ecdc4; cursor: pointer; }
+.len-val { font-family: var(--mono); font-size: .85rem; color: var(--text); min-width: 28px; text-align: right; }
 
-  /* Score row */
-  .score-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 1.25rem; }
+.opt { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--muted); cursor: pointer; user-select: none; }
+.opt input { accent-color: #4ecdc4; width: 14px; height: 14px; cursor: pointer; }
 
-  .score-badge {
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    background: var(--surface2);
-    color: var(--muted);
-    letter-spacing: 0.05em;
-    transition: background 0.3s, color 0.3s;
-  }
+.gen-btn { width: 100%; padding: .7rem; background: #1c2e2b; border: 1px solid rgba(78,205,196,.25); border-radius: 10px; color: #4ecdc4; font-family: var(--mono); font-size: .85rem; font-weight: 700; letter-spacing: .05em; cursor: pointer; transition: background .2s, border-color .2s; }
+.gen-btn:hover { background: #243b37; border-color: rgba(78,205,196,.5); }
 
-  .entropy-txt {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-family: var(--mono);
-  }
+.use-btn { width: 100%; margin-top: 8px; padding: .6rem; background: transparent; border: 1px solid var(--b2); border-radius: 10px; color: var(--muted); font-family: var(--sans); font-size: .8rem; cursor: pointer; transition: background .2s, color .2s; }
+.use-btn:hover { background: var(--s2); color: var(--text); }
 
-  /* Crack time — hero display */
-  .crack-block {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    transition: border-color 0.3s;
-  }
+.toast { font-size: .72rem; color: #4ecdc4; text-align: center; height: 16px; margin-top: 6px; opacity: 0; transition: opacity .3s; }
+.toast.show { opacity: 1; }
 
-  .crack-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 500;
-  }
-
-  .crack-value {
-    font-family: var(--mono);
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #f0f0f0;
-    transition: color 0.3s;
-    line-height: 1.2;
-  }
-
-  .crack-sub {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  /* Checks grid */
-  .checks-title {
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 500;
-    margin-bottom: 0.75rem;
-  }
-
-  .checks {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 16px;
-    margin-bottom: 1.25rem;
-  }
-
-  .chk {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    color: #4a5060;
-    transition: color 0.25s;
-  }
-
-  .chk .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    border: 1.5px solid #2e3240;
-    flex-shrink: 0;
-    transition: background 0.25s, border-color 0.25s;
-  }
-
-  .chk.pass { color: #a3b899; }
-  .chk.pass .dot { background: #5a9e6a; border-color: #5a9e6a; }
-
-  /* Suggestion */
-  .tip {
-    font-size: 0.8rem;
-    color: var(--muted);
-    min-height: 1.1rem;
-    line-height: 1.5;
-    border-left: 2px solid var(--border2);
-    padding-left: 0.75rem;
-  }
-
-  .tip.visible { border-color: rgba(255,255,255,0.2); }
-
-  /* Colors per level */
-  .lvl-0 .bar-seg.active { background: #c0392b; }
-  .lvl-1 .bar-seg.active { background: #e67e22; }
-  .lvl-2 .bar-seg.active { background: #d4ac0d; }
-  .lvl-3 .bar-seg.active { background: #27ae60; }
-  .lvl-4 .bar-seg.active { background: #1abc9c; }
-
-  .lvl-0 .score-badge { background: rgba(192,57,43,0.15); color: #e06c64; }
-  .lvl-1 .score-badge { background: rgba(230,126,34,0.15); color: #e89e5a; }
-  .lvl-2 .score-badge { background: rgba(212,172,13,0.15); color: #d4b94a; }
-  .lvl-3 .score-badge { background: rgba(39,174,96,0.15); color: #65c98a; }
-  .lvl-4 .score-badge { background: rgba(26,188,156,0.12); color: #4ecdc4; }
-
-  .lvl-0 .crack-block { border-color: rgba(192,57,43,0.3); }
-  .lvl-1 .crack-block { border-color: rgba(230,126,34,0.3); }
-  .lvl-2 .crack-block { border-color: rgba(212,172,13,0.3); }
-  .lvl-3 .crack-block { border-color: rgba(39,174,96,0.25); }
-  .lvl-4 .crack-block { border-color: rgba(26,188,156,0.25); }
-
-  .lvl-0 .crack-value { color: #e06c64; }
-  .lvl-1 .crack-value { color: #e89e5a; }
-  .lvl-2 .crack-value { color: #d4b94a; }
-  .lvl-3 .crack-value { color: #65c98a; }
-  .lvl-4 .crack-value { color: #4ecdc4; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Footer */
-  .footer {
-    margin-top: 1.75rem;
-    font-size: 0.7rem;
-    color: #2e3240;
-    text-align: center;
-    animation: fadeUp 0.5s 0.2s ease both;
-  }
+@keyframes up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
 
-<header class="page-header">
+<div class="hdr">
   <h1>🔐 Password Strength</h1>
   <p>See how long it would take to crack your password</p>
-</header>
-
-<div class="card" id="card">
-  <div class="field-label">Your password</div>
-  <div class="pw-wrap">
-    <input type="password" id="pw" placeholder="Start typing…" autocomplete="off" spellcheck="false" />
-    <button class="toggle-btn" id="toggle" title="Show/hide">👁</button>
-  </div>
-
-  <div class="bar-row" id="bar-row">
-    <div class="bar-seg" id="s0"></div>
-    <div class="bar-seg" id="s1"></div>
-    <div class="bar-seg" id="s2"></div>
-    <div class="bar-seg" id="s3"></div>
-    <div class="bar-seg" id="s4"></div>
-  </div>
-
-  <div class="score-row">
-    <span class="score-badge" id="badge">—</span>
-    <span class="entropy-txt" id="entropy"></span>
-  </div>
-
-  <div class="crack-block" id="crack-block">
-    <div class="crack-label">Estimated crack time</div>
-    <div class="crack-value" id="crack-val">—</div>
-    <div class="crack-sub" id="crack-sub">Enter a password above</div>
-  </div>
-
-  <div class="checks-title">Requirements</div>
-  <div class="checks">
-    <div class="chk" id="c-len8"><div class="dot"></div>8+ characters</div>
-    <div class="chk" id="c-len12"><div class="dot"></div>12+ characters</div>
-    <div class="chk" id="c-upper"><div class="dot"></div>Uppercase letter</div>
-    <div class="chk" id="c-lower"><div class="dot"></div>Lowercase letter</div>
-    <div class="chk" id="c-num"><div class="dot"></div>Number</div>
-    <div class="chk" id="c-sym"><div class="dot"></div>Symbol (!@#…)</div>
-    <div class="chk" id="c-norep"><div class="dot"></div>No repeating chars</div>
-    <div class="chk" id="c-noseq"><div class="dot"></div>No sequences (abc…)</div>
-  </div>
-
-  <div class="tip" id="tip" style="display:none"></div>
 </div>
 
+<div class="card" id="card">
+  <div class="lbl">Your password</div>
+  <div class="rel">
+    <input type="password" id="pw" placeholder="Start typing…" autocomplete="off" spellcheck="false" />
+    <button class="icon-btn" id="toggle">👁</button>
+  </div>
+  <div class="bars">
+    <div class="seg" id="s0"></div><div class="seg" id="s1"></div>
+    <div class="seg" id="s2"></div><div class="seg" id="s3"></div><div class="seg" id="s4"></div>
+  </div>
+  <div class="score-row">
+    <span class="badge" id="badge">—</span>
+    <span class="ebits" id="ebits"></span>
+  </div>
+  <div class="crack">
+    <div class="crack-lbl">Estimated crack time</div>
+    <div class="crack-val" id="crack-val">—</div>
+    <div class="crack-sub" id="crack-sub">Enter a password above</div>
+  </div>
+  <div class="req-title">Requirements</div>
+  <div class="reqs">
+    <div class="req" id="r-len"><div class="dot"></div>8+ characters</div>
+    <div class="req" id="r-upper"><div class="dot"></div>Uppercase letter</div>
+    <div class="req" id="r-lower"><div class="dot"></div>Lowercase letter</div>
+    <div class="req" id="r-num"><div class="dot"></div>Number</div>
+    <div class="req" id="r-sym"><div class="dot"></div>Symbol (!@#…)</div>
+    <div class="req" id="r-rep"><div class="dot"></div>No repeating chars</div>
+    <div class="req" id="r-seq"><div class="dot"></div>No sequences (abc…)</div>
+  </div>
+  <div class="tip" id="tip"></div>
+</div>
 
+<div class="gen-card">
+  <div class="lbl">Password Generator</div>
+  <div class="rel">
+    <input type="text" id="gen-output" readonly placeholder="Click generate…" />
+    <button class="icon-btn" id="copy-btn">⧉</button>
+  </div>
+  <div class="len-row">
+    <label>Length</label>
+    <input type="range" id="gen-len" min="8" max="64" value="16" />
+    <span class="len-val" id="len-val">16</span>
+  </div>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" id="o-upper" checked /> Uppercase (A–Z)</label>
+    <label class="opt"><input type="checkbox" id="o-lower" checked /> Lowercase (a–z)</label>
+    <label class="opt"><input type="checkbox" id="o-num"   checked /> Numbers (0–9)</label>
+    <label class="opt"><input type="checkbox" id="o-sym"   checked /> Symbols (!@#…)</label>
+  </div>
+  <button class="gen-btn" id="gen-btn">⟳ Generate Password</button>
+  <button class="use-btn" id="use-btn">↑ Use this password</button>
+  <div class="toast" id="toast">Copied to clipboard!</div>
+</div>
 
 <script>
-// ─── Dictionaries & patterns ───────────────────────────────────────────────
-const COMMON_WORDS = new Set([
-  'password','passw0rd','p@ssword','p@ssw0rd','pa$$word',
-  '123456','12345678','123456789','1234567890','111111','000000',
-  'qwerty','qwertyuiop','qwerty123','abc123','abcdef',
-  'letmein','welcome','monkey','dragon','master','sunshine',
-  'princess','iloveyou','football','baseball','superman','batman',
-  'trustno1','pass','admin','login','test','guest','user',
-  'shadow','michael','jessica','ashley','bailey','charlie',
-  'donald','harley','ranger','thomas','tigger','robert',
-  'soccer','hockey','killer','george','andrew','thomas',
-  'summer','winter','spring','autumn','january','february',
-  'march','april','june','july','august','september',
-  'october','november','december'
+const COMMON = new Set([
+  'password','passw0rd','p@ssword','p@ssw0rd','pa$$word','123456','12345678','123456789',
+  '1234567890','111111','000000','qwerty','qwertyuiop','qwerty123','abc123','abcdef',
+  'letmein','welcome','monkey','dragon','master','sunshine','princess','iloveyou',
+  'football','baseball','superman','batman','trustno1','pass','admin','login','test',
+  'guest','user','shadow','michael','jessica','ashley','bailey','charlie','donald',
+  'harley','ranger','thomas','tigger','robert','soccer','hockey','killer','george',
+  'andrew','summer','winter','spring','autumn','january','february','march','april',
+  'june','july','august','september','october','november','december'
 ]);
 
-const KEYBOARD_WALKS = [
-  'qwertyuiop','asdfghjkl','zxcvbnm',
-  'qazwsxedc','1qaz2wsx','!qaz@wsx',
-  '1234567890','0987654321','123qwe','qwe123'
-];
+const WALKS = ['qwertyuiop','asdfghjkl','zxcvbnm','qazwsxedc','1qaz2wsx','!qaz@wsx','1234567890','0987654321','123qwe','qwe123'];
+const LEET  = {'@':'a','3':'e','1':'i','0':'o','$':'s','5':'s','7':'t','!':'i','4':'a'};
 
-const LEET = {'@':'a','3':'e','1':'i','0':'o','$':'s','5':'s','7':'t','!':'i','4':'a'};
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
-function deleet(s) {
-  return s.toLowerCase().split('').map(c => LEET[c] || c).join('');
-}
+const deleet = s => s.toLowerCase().split('').map(c => LEET[c]||c).join('');
 
 function isCommon(s) {
-  const l = s.toLowerCase();
-  const dl = deleet(s);
-  if (COMMON_WORDS.has(l) || COMMON_WORDS.has(dl)) return true;
-  // strip trailing digits/symbols and check base word
+  const l = s.toLowerCase(), dl = deleet(s);
+  if (COMMON.has(l) || COMMON.has(dl)) return true;
   const base = l.replace(/[\d!@#$%^&*]+$/, '').replace(/^[\d!@#$%^&*]+/, '');
-  if (base.length >= 4 && COMMON_WORDS.has(base)) return true;
-  return false;
+  return base.length >= 4 && COMMON.has(base);
 }
 
-function hasKeyboardWalk(s) {
+function hasWalk(s) {
   const l = s.toLowerCase();
-  for (const walk of KEYBOARD_WALKS) {
-    for (let i = 0; i <= walk.length - 4; i++) {
-      if (l.includes(walk.slice(i, i+4))) return true;
-      const rev = walk.slice(i, i+4).split('').reverse().join('');
-      if (l.includes(rev)) return true;
+  for (const w of WALKS)
+    for (let i = 0; i <= w.length - 4; i++) {
+      const sub = w.slice(i, i+4);
+      if (l.includes(sub) || l.includes(sub.split('').reverse().join(''))) return true;
     }
-  }
   return false;
 }
 
-function hasDatePattern(s) {
-  return /\b(19|20)\d{2}\b/.test(s) ||
-         /\b\d{1,2}[\/\-\.]\d{1,2}([\/\-\.]\d{2,4})?\b/.test(s) ||
-         /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(s);
-}
+const hasDate = s => /\b(19|20)\d{2}\b/.test(s) || /\b\d{1,2}[\/\-\.]\d{1,2}([\/\-\.]\d{2,4})?\b/.test(s) || /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(s);
+const hasRep  = s => /(.)\1{2,}/.test(s);
 
-function hasRepeatedChars(s) {
-  return /(.)\1{2,}/.test(s);
-}
-
-function charsetSize(s) {
+function charPool(s) {
   let n = 0;
   if (/[a-z]/.test(s)) n += 26;
   if (/[A-Z]/.test(s)) n += 26;
@@ -404,115 +199,55 @@ function charsetSize(s) {
   return n;
 }
 
-// ─── Core: estimate effective guesses needed ────────────────────────────────
-// Returns an object with guesses (BigInt-safe float) and penalty reasons
 function estimateGuesses(s) {
   const len = s.length;
-  if (len === 0) return { guesses: 0, reasons: [] };
-
-  const reasons = [];
+  if (!len) return { guesses: 0, reasons: [] };
+  const reasons = [], brute = Math.pow(charPool(s), len);
+  let penalty = 1;
+  if (isCommon(s)) return { guesses: Math.min(brute, 1e7), reasons: ['common'] };
+  if (hasWalk(s))  { penalty *= 0.001; reasons.push('keyboard'); }
+  if (hasDate(s))  { penalty *= 0.01;  reasons.push('date'); }
+  if (hasRep(s))   { penalty *= 0.1;   reasons.push('repeat'); }
   let guesses;
-
-  // 1. Base: brute-force combinations with charset
-  const cs = charsetSize(s);
-  const bruteGuesses = Math.pow(cs, len);
-
-  // 2. Pattern penalties — reduce effective guesses when patterns detected
-  let penalty = 1.0; // multiplier < 1 makes cracking easier (fewer effective guesses)
-
-  if (isCommon(s)) {
-    // Common passwords: attackers try these in first ~10M guesses
-    guesses = Math.min(bruteGuesses, 1e7);
-    reasons.push('common');
-    return { guesses, reasons };
-  }
-
-  if (hasKeyboardWalk(s)) {
-    penalty *= 0.001; // keyboard walks are in every wordlist
-    reasons.push('keyboard');
-  }
-
-  if (hasDatePattern(s)) {
-    penalty *= 0.01;
-    reasons.push('date');
-  }
-
-  if (hasRepeatedChars(s)) {
-    penalty *= 0.1;
-    reasons.push('repeat');
-  }
-
-  // 3. All-lowercase or all-uppercase with only letters → dictionary-like
   if (/^[a-zA-Z]+$/.test(s)) {
-    // Treat as word-based: ~170k English words, but brute still applies if long
-    const wordGuesses = Math.pow(170000, Math.max(1, Math.round(len / 5)));
-    guesses = Math.min(bruteGuesses, wordGuesses) * (penalty < 1 ? penalty : 1);
+    guesses = Math.min(brute, Math.pow(170000, Math.max(1, Math.round(len/5)))) * (penalty < 1 ? penalty : 1);
     if (len < 8) reasons.push('short');
   } else {
-    guesses = bruteGuesses * penalty;
+    guesses = brute * penalty;
   }
-
-  // 4. Short password bonus penalty
-  if (len < 8) {
-    guesses = Math.min(guesses, bruteGuesses); // no benefit from patterns, still short
-    reasons.push('short');
-  }
-
+  if (len < 8) { guesses = Math.min(guesses, brute); reasons.push('short'); }
   return { guesses: Math.max(1, guesses), reasons };
 }
 
-// ─── Format seconds into human time ────────────────────────────────────────
-function fmtSecs(secs) {
-  if (secs < 0.001)           return 'less than a millisecond';
-  if (secs < 1)               return Math.round(secs * 1000) + ' milliseconds';
-  if (secs < 60)              return fmtUnit(secs, 'second');
-  if (secs < 3600)            return fmtUnit(secs / 60, 'minute');
-  if (secs < 86400)           return fmtUnit(secs / 3600, 'hour');
-  if (secs < 86400 * 30)      return fmtUnit(secs / 86400, 'day');
-  if (secs < 86400 * 365)     return fmtUnit(secs / (86400 * 30), 'month');
-  if (secs < 86400 * 365 * 1e3)  return fmtUnit(secs / (86400 * 365), 'year');
-  if (secs < 86400 * 365 * 1e6)  return fmtUnit(secs / (86400 * 365 * 1e3), 'thousand years');
-  if (secs < 86400 * 365 * 1e9)  return fmtUnit(secs / (86400 * 365 * 1e6), 'million years');
-  if (secs < 86400 * 365 * 1e12) return fmtUnit(secs / (86400 * 365 * 1e9), 'billion years');
+function fmtTime(secs) {
+  const u = (n, unit) => { const r = n >= 10 ? Math.round(n) : parseFloat(n.toPrecision(2)); return r + ' ' + unit + (r !== 1 ? 's' : ''); };
+  if (secs < 0.001)  return 'less than a millisecond';
+  if (secs < 1)      return Math.round(secs*1000) + ' milliseconds';
+  if (secs < 60)     return u(secs, 'second');
+  if (secs < 3600)   return u(secs/60, 'minute');
+  if (secs < 86400)  return u(secs/3600, 'hour');
+  if (secs < 2592000)  return u(secs/86400, 'day');
+  if (secs < 31536000) return u(secs/2592000, 'month');
+  if (secs < 3.15e10)  return u(secs/31536000, 'year');
+  if (secs < 3.15e13)  return u(secs/3.15e10, 'thousand years');
+  if (secs < 3.15e16)  return u(secs/3.15e13, 'million years');
+  if (secs < 3.15e19)  return u(secs/3.15e16, 'billion years');
   return 'longer than the universe has existed';
 }
 
-function fmtUnit(n, unit) {
-  const r = n >= 10 ? Math.round(n) : parseFloat(n.toPrecision(2));
-  return r + ' ' + unit + (r !== 1 ? 's' : '');
-}
-
-// ─── Three attack scenarios ─────────────────────────────────────────────────
-// Rate = guesses/second for each scenario
-// Online throttled: 10/s (login page with rate limiting)
-// Fast hash (MD5/SHA1 leaked DB): 10 billion/s
-// Slow hash (bcrypt cost 10): ~20,000/s
-const SCENARIOS = [
-  { label: 'Online attack',    rate: 10,     note: 'Rate-limited login, 10 guesses/sec' },
-  { label: 'Fast hash (MD5)',  rate: 1e10,   note: 'Leaked DB, weak hashing, 10B/sec' },
-  { label: 'Slow hash (bcrypt)', rate: 2e4,  note: 'Properly stored password, 20K/sec' },
+const LEVELS = [
+  {label:'Very weak',segs:1},{label:'Weak',segs:2},{label:'Fair',segs:3},
+  {label:'Strong',segs:4},{label:'Very strong',segs:5}
 ];
 
-// ─── UI refs ────────────────────────────────────────────────────────────────
-const levels = [
-  { label: 'Very weak',   segs: 1 },
-  { label: 'Weak',        segs: 2 },
-  { label: 'Fair',        segs: 3 },
-  { label: 'Strong',      segs: 4 },
-  { label: 'Very strong', segs: 5 },
-];
-
-const segs = [0,1,2,3,4].map(i => document.getElementById('s'+i));
-const card = document.getElementById('card');
+const segs  = [0,1,2,3,4].map(i => document.getElementById('s'+i));
+const card  = document.getElementById('card');
 const badge = document.getElementById('badge');
-const entropy = document.getElementById('entropy');
-const crackVal = document.getElementById('crack-val');
-const crackSub = document.getElementById('crack-sub');
-const tip = document.getElementById('tip');
-
-function setCheck(id, pass) {
-  document.getElementById(id).classList.toggle('pass', pass);
-}
+const ebits = document.getElementById('ebits');
+const cval  = document.getElementById('crack-val');
+const csub  = document.getElementById('crack-sub');
+const tip   = document.getElementById('tip');
+const chk   = (id, pass) => document.getElementById(id).classList.toggle('pass', pass);
 
 document.getElementById('toggle').addEventListener('click', () => {
   const pw = document.getElementById('pw');
@@ -521,86 +256,120 @@ document.getElementById('toggle').addEventListener('click', () => {
 
 document.getElementById('pw').addEventListener('input', function() {
   const val = this.value;
-
-  segs.forEach(s => s.classList.remove('active'));
+  segs.forEach(s => s.classList.remove('on'));
   card.className = 'card';
 
   if (!val) {
-    badge.textContent = '—';
-    entropy.textContent = '';
-    crackVal.textContent = '—';
-    crackSub.textContent = 'Enter a password above';
-    tip.textContent = '';
-    tip.style.display = 'none';
-    ['c-len8','c-len12','c-upper','c-lower','c-num','c-sym','c-norep','c-noseq'].forEach(id => setCheck(id, false));
+    badge.textContent = '—'; ebits.textContent = '';
+    cval.textContent = '—'; csub.textContent = 'Enter a password above';
+    tip.textContent = ''; tip.className = 'tip';
+    ['r-len','r-upper','r-lower','r-num','r-sym','r-rep','r-seq'].forEach(id => chk(id, false));
     return;
   }
 
-  const hasUpper = /[A-Z]/.test(val);
-  const hasLower = /[a-z]/.test(val);
-  const hasNum   = /[0-9]/.test(val);
-  const hasSym   = /[^a-zA-Z0-9]/.test(val);
-  const len8     = val.length >= 8;
-  const len12    = val.length >= 12;
-  const noRep    = !hasRepeatedChars(val);
-  const noSeq    = !hasKeyboardWalk(val);
+  const up  = /[A-Z]/.test(val), lo  = /[a-z]/.test(val);
+  const num = /[0-9]/.test(val), sym = /[^a-zA-Z0-9]/.test(val);
+  const l8  = val.length >= 8,   noR = !hasRep(val), noS = !hasWalk(val);
 
-  setCheck('c-len8', len8);
-  setCheck('c-len12', len12);
-  setCheck('c-upper', hasUpper);
-  setCheck('c-lower', hasLower);
-  setCheck('c-num', hasNum);
-  setCheck('c-sym', hasSym);
-  setCheck('c-norep', noRep);
-  setCheck('c-noseq', noSeq);
+  chk('r-len', l8); chk('r-upper', up); chk('r-lower', lo);
+  chk('r-num', num); chk('r-sym', sym); chk('r-rep', noR); chk('r-seq', noS);
 
-  // ── Estimate guesses ──
   const { guesses, reasons } = estimateGuesses(val);
+  const bits = guesses > 0 ? Math.log2(guesses) : 0;
+  const lvl  = bits < 28 ? 0 : bits < 36 ? 1 : bits < 50 ? 2 : bits < 64 ? 3 : 4;
 
-  // ── Effective entropy (bits) from guesses ──
-  const effectiveBits = guesses > 0 ? Math.log2(guesses) : 0;
+  card.classList.add('lvl-' + lvl);
+  badge.textContent = LEVELS[lvl].label;
+  for (let i = 0; i < LEVELS[lvl].segs; i++) segs[i].classList.add('on');
+  ebits.textContent = Math.round(bits) + ' effective bits';
+  cval.textContent  = fmtTime((guesses / 2) / 1e10);
+  csub.textContent  = 'With bcrypt: ' + fmtTime((guesses / 2) / 2e4) + ' · Fast offline attack';
 
-  // ── Score from effective bits (not raw charset) ──
-  // <28 bits = very weak, <36 = weak, <50 = fair, <64 = strong, 64+ = very strong
-  let lvlIdx = effectiveBits < 28 ? 0
-             : effectiveBits < 36 ? 1
-             : effectiveBits < 50 ? 2
-             : effectiveBits < 64 ? 3 : 4;
+  const msgs = [];
+  if (reasons.includes('common'))        msgs.push('This matches a commonly breached password.');
+  else if (reasons.includes('keyboard')) msgs.push('Keyboard patterns like "qwerty" are cracked instantly.');
+  else if (reasons.includes('date'))     msgs.push('Dates are among the first things crackers try.');
+  else if (!l8)  msgs.push('Use at least 8 characters to start.');
+  else if (!up)  msgs.push('Add an uppercase letter.');
+  else if (!lo)  msgs.push('Add a lowercase letter.');
+  else if (!num) msgs.push('Include a number.');
+  else if (!sym) msgs.push('Add a symbol like ! @ # $ %.');
 
-  const lvl = levels[lvlIdx];
-  card.classList.add('lvl-' + lvlIdx);
-  badge.textContent = lvl.label;
-  for (let i = 0; i < lvl.segs; i++) segs[i].classList.add('active');
-  entropy.textContent = Math.round(effectiveBits) + ' effective bits';
-
-  // ── Show worst-case scenario (fast hash) as headline ──
-  const worstRate = SCENARIOS[1].rate; // fast hash
-  const worstSecs = (guesses / 2) / worstRate;
-  crackVal.textContent = fmtSecs(worstSecs);
-
-  // ── Sub-line: show bcrypt time for comparison ──
-  const bcryptRate = SCENARIOS[2].rate;
-  const bcryptSecs = (guesses / 2) / bcryptRate;
-  crackSub.textContent = 'With bcrypt: ' + fmtSecs(bcryptSecs) + ' · Assumes fast offline attack';
-
-  // ── Tips ──
-  const tips = [];
-  if (reasons.includes('common'))   tips.push('This matches a commonly breached password or pattern.');
-  else if (reasons.includes('keyboard')) tips.push('Keyboard patterns like "qwerty" are cracked instantly.');
-  else if (reasons.includes('date'))     tips.push('Dates and years are among the first things crackers try.');
-  else if (!len8)    tips.push('Use at least 8 characters to start.');
-  else if (!len12)   tips.push('Extend to 12+ characters for much better security.');
-  else if (!hasUpper) tips.push('Add an uppercase letter.');
-  else if (!hasLower) tips.push('Add a lowercase letter.');
-  else if (!hasNum)   tips.push('Include a number.');
-  else if (!hasSym)   tips.push('Add a symbol like ! @ # $ % to boost strength.');
-
-  const tipText = tips[0] || (lvlIdx >= 3 ? 'Great password! A long random passphrase is even stronger.' : '');
-  tip.textContent = tipText;
-  tip.style.display = tipText ? 'block' : 'none';
-  tip.classList.toggle('visible', !!tipText);
+  const txt = msgs[0] || (lvl >= 3 ? 'Great password! A long passphrase is even stronger.' : '');
+  tip.textContent = txt;
+  tip.className = 'tip' + (txt ? ' show' : '');
 });
+
+function randInt(max) {
+  const a = new Uint32Array(1);
+  crypto.getRandomValues(a);
+  return a[0] % max;
+}
+
+function generatePassword() {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const nums  = '0123456789';
+  const syms  = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+  const len   = parseInt(document.getElementById('gen-len').value);
+  let pool = '', guaranteed = [];
+
+  if (document.getElementById('o-upper').checked) { pool += upper; guaranteed.push(upper[randInt(upper.length)]); }
+  if (document.getElementById('o-lower').checked) { pool += lower; guaranteed.push(lower[randInt(lower.length)]); }
+  if (document.getElementById('o-num').checked)   { pool += nums;  guaranteed.push(nums[randInt(nums.length)]); }
+  if (document.getElementById('o-sym').checked)   { pool += syms;  guaranteed.push(syms[randInt(syms.length)]); }
+
+  if (!pool) { document.getElementById('gen-output').value = 'Select at least one option'; return; }
+
+  const all = [...guaranteed, ...Array.from({length: Math.max(0, len - guaranteed.length)}, () => pool[randInt(pool.length)])];
+  for (let i = all.length - 1; i > 0; i--) { const j = randInt(i+1); [all[i],all[j]] = [all[j],all[i]]; }
+  document.getElementById('gen-output').value = all.join('');
+}
+
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(showToast).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = Object.assign(document.createElement('textarea'), {value: text});
+  ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+document.getElementById('gen-len').addEventListener('input', function() {
+  document.getElementById('len-val').textContent = this.value;
+});
+
+document.getElementById('gen-btn').addEventListener('click', generatePassword);
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const val = document.getElementById('gen-output').value;
+  if (val && val !== 'Select at least one option') copyText(val);
+});
+
+document.getElementById('use-btn').addEventListener('click', () => {
+  const val = document.getElementById('gen-output').value;
+  if (!val || val === 'Select at least one option') return;
+  const pw = document.getElementById('pw');
+  pw.value = val; pw.type = 'text';
+  pw.dispatchEvent(new Event('input'));
+  pw.scrollIntoView({behavior:'smooth', block:'center'});
+});
+
+generatePassword();
 </script>
 </body>
 </html>
-
